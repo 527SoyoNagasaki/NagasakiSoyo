@@ -171,6 +171,16 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
+        
+        /* === 加载动画 === */
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -280,6 +290,50 @@
 
     <script>
         // =========================================
+        // 全局函数，供动态加载的页面使用
+        // =========================================
+        window.toggleMusicPlayer = function() {
+            const audio = document.getElementById('bgm-audio');
+            if (!audio) {
+                console.warn('找不到音频元素');
+                return;
+            }
+            
+            try {
+                if (audio.paused) {
+                    audio.play().catch(e => {
+                        console.log('音乐自动播放被阻止，需要用户交互');
+                    });
+                } else {
+                    audio.pause();
+                }
+            } catch (error) {
+                console.error('音乐控制出错:', error);
+            }
+        };
+        
+        // 其他可能需要全局化的函数
+        window.openDetail = function(index) {
+            console.log('打开电脑版详情页:', index);
+            // 这里可以添加打开详情页的逻辑
+        };
+        
+        window.openMobileDetail = function(index) {
+            console.log('打开手机版详情页:', index);
+            // 这里可以添加打开手机版详情页的逻辑
+        };
+        
+        window.closeDetail = function() {
+            console.log('关闭详情页');
+            // 关闭详情页的逻辑
+        };
+        
+        window.closeImageModal = function() {
+            console.log('关闭图片查看器');
+            // 关闭图片查看器的逻辑
+        };
+        
+        // =========================================
         // 全局变量和状态管理
         // =========================================
         let currentPage = 'selection';
@@ -377,7 +431,7 @@
             desktopPage.innerHTML = `
                 <div class="h-screen w-full flex items-center justify-center bg-[#1a0b2e]">
                     <div class="text-center">
-                        <div class="inline-block animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-400 mb-4"></div>
+                        <div class="inline-block spinner rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-400 mb-4"></div>
                         <h1 class="text-2xl font-bold text-white mb-2">正在加载电脑版...</h1>
                         <p class="text-slate-300">请稍候</p>
                     </div>
@@ -391,8 +445,8 @@
             if (desktopPageLoaded) return;
             
             try {
-                // 加载电脑版HTML - 修改这里！！！
-                const response = await fetch('desktop.html');  // 改成这个文件名
+                // 加载电脑版HTML
+                const response = await fetch('desktop.html');
                 if (!response.ok) throw new Error('加载失败');
                 
                 const html = await response.text();
@@ -414,7 +468,9 @@
                 desktopPageLoaded = true;
                 
                 // 初始化电脑版脚本
-                initDesktopScripts();
+                setTimeout(() => {
+                    initDesktopScripts();
+                }, 300);
                 
             } catch (error) {
                 console.error('加载电脑版失败:', error);
@@ -441,7 +497,7 @@
             mobilePage.innerHTML = `
                 <div class="h-screen w-full flex items-center justify-center bg-[#1a0b2e]">
                     <div class="text-center">
-                        <div class="inline-block animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-400 mb-4"></div>
+                        <div class="inline-block spinner rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-400 mb-4"></div>
                         <h1 class="text-2xl font-bold text-white mb-2">正在加载手机版...</h1>
                         <p class="text-slate-300">请稍候</p>
                     </div>
@@ -455,8 +511,8 @@
             if (mobilePageLoaded) return;
             
             try {
-                // 加载手机版HTML - 修改这里！！！
-                const response = await fetch('mobile.html');  // 改成这个文件名
+                // 加载手机版HTML
+                const response = await fetch('mobile.html');
                 if (!response.ok) throw new Error('加载失败');
                 
                 const html = await response.text();
@@ -478,7 +534,9 @@
                 mobilePageLoaded = true;
                 
                 // 初始化手机版脚本
-                initMobileScripts();
+                setTimeout(() => {
+                    initMobileScripts();
+                }, 300);
                 
             } catch (error) {
                 console.error('加载手机版失败:', error);
@@ -497,22 +555,120 @@
         }
         
         // =========================================
-        // 电脑版脚本初始化（占位函数）
+        // 电脑版脚本初始化
         // =========================================
         function initDesktopScripts() {
             console.log('初始化电脑版脚本');
-            // 这里会自动运行 desktop.html 中的脚本
-            // 因为我们将整个HTML内容加载进来了
             
-            // 如果您需要在加载后执行额外操作，可以在这里添加
+            // 延迟执行，确保DOM完全加载
+            setTimeout(() => {
+                // 1. 重新绑定音乐播放器
+                const audio = document.getElementById('bgm-audio');
+                const player = document.getElementById('music-player-container');
+                
+                if (player) {
+                    // 移除旧的 onclick 属性
+                    player.removeAttribute('onclick');
+                    
+                    // 添加新的事件监听器
+                    player.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        if (!audio) {
+                            console.warn('找不到音频元素');
+                            return;
+                        }
+                        
+                        try {
+                            if (audio.paused) {
+                                audio.play().catch(err => {
+                                    console.log('播放失败，可能需要用户交互:', err);
+                                });
+                            } else {
+                                audio.pause();
+                            }
+                        } catch (error) {
+                            console.error('音乐控制出错:', error);
+                        }
+                    }, { capture: true });
+                }
+                
+                // 2. 重新绑定卡片点击事件
+                const cards = document.querySelectorAll('#card-grid > div');
+                cards.forEach((card, index) => {
+                    card.onclick = function() {
+                        window.openDetail && window.openDetail(index);
+                    };
+                });
+                
+                // 3. 检查外部库
+                if (typeof gsap !== 'undefined') {
+                    console.log('GSAP已加载');
+                }
+                
+                // 4. 触发动画和画廊初始化
+                if (typeof initGallery !== 'undefined') {
+                    try {
+                        initGallery();
+                    } catch (e) {
+                        console.log('初始化画廊失败:', e);
+                    }
+                }
+                
+                console.log('电脑版初始化完成');
+            }, 500);
         }
         
         // =========================================
-        // 手机版脚本初始化（占位函数）
+        // 手机版脚本初始化
         // =========================================
         function initMobileScripts() {
             console.log('初始化手机版脚本');
-            // 这里会自动运行 mobile.html 中的脚本
+            
+            setTimeout(() => {
+                // 1. 重新绑定音乐播放器
+                const audio = document.getElementById('bgm-audio');
+                const player = document.getElementById('music-player-container');
+                
+                if (player) {
+                    // 移除旧的 onclick 属性
+                    player.removeAttribute('onclick');
+                    
+                    // 添加新的事件监听器
+                    player.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        if (!audio) {
+                            console.warn('找不到音频元素');
+                            return;
+                        }
+                        
+                        try {
+                            if (audio.paused) {
+                                audio.play().catch(err => {
+                                    console.log('播放失败:', err);
+                                });
+                            } else {
+                                audio.pause();
+                            }
+                        } catch (error) {
+                            console.error('音乐控制出错:', error);
+                        }
+                    }, true);
+                }
+                
+                // 2. 重新绑定卡片点击事件
+                const cards = document.querySelectorAll('#card-grid > div');
+                cards.forEach((card, index) => {
+                    card.onclick = function() {
+                        window.openMobileDetail && window.openMobileDetail(index);
+                    };
+                });
+                
+                console.log('手机版初始化完成');
+            }, 500);
         }
         
         // =========================================
