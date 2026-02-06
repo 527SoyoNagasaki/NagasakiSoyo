@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nagasaki Soyo | Gallery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* === 页面切换动画 === */
+        .page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0.5s;
+            overflow-y: auto;
+            z-index: 1;
+        }
+        
+        .page.active {
+            opacity: 1;
+            visibility: visible;
+            z-index: 2;
+        }
+        
+        /* === 返回按钮 === */
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 10000;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        /* === 选择页面样式 === */
+        #selection-page {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #1a0b2e 0%, #0f0518 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        .font-script {
+            font-family: 'Dancing Script', cursive;
+        }
+        
+        .bg-grid {
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        
+        .device-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .device-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .device-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 30%, rgba(99, 102, 241, 0.1) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+        
+        .device-card:hover::before {
+            transform: translateX(100%);
+        }
+        
+        .device-icon {
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+            transition: all 0.3s ease;
+        }
+        
+        .device-card:hover .device-icon {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.5));
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: translateX(-100%);
+        }
+        
+        .btn-primary:hover::after {
+            animation: shine 0.8s ease;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .floating-stars div {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: float 3s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.7; }
+            50% { transform: translateY(-20px) scale(1.1); opacity: 1; }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ========================================= -->
+    <!-- 选择页面 (初始显示) -->
+    <!-- ========================================= -->
+    <div id="selection-page" class="page active">
+        <!-- 背景装饰元素 -->
+        <div class="absolute inset-0 bg-grid opacity-20"></div>
+        
+        <div class="floating-stars">
+            <div class="w-1 h-1 top-1/4 left-1/4"></div>
+            <div class="w-2 h-2 top-1/3 right-1/3"></div>
+            <div class="w-1 h-1 bottom-1/4 left-1/3"></div>
+            <div class="w-1.5 h-1.5 top-2/3 right-1/4"></div>
+            <div class="w-1 h-1 bottom-1/3 left-2/3"></div>
+        </div>
+        
+        <div class="container mx-auto px-4 py-12 min-h-screen flex flex-col justify-center relative z-10">
+            <!-- 标题区域 -->
+            <div class="text-center mb-12">
+                <h1 class="text-5xl md:text-6xl font-black mb-4">
+                    <span class="font-script text-6xl md:text-7xl text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nagasaki Soyo</span>
+                    <br>
+                    <span class="text-3xl md:text-4xl">Gallery</span>
+                </h1>
+                <p class="text-slate-300 text-lg max-w-2xl mx-auto">欢迎回来，迷子。请选择最适合您设备的版本以获得最佳体验。</p>
+            </div>
+            
+            <!-- 设备选择卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-12">
+                <!-- 电脑版卡片 -->
+                <div class="device-card rounded-2xl p-8">
+                    <div class="flex flex-col items-center text-center h-full">
+                        <div class="mb-6">
+                            <svg class="device-icon w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-6">电脑版</h3>
+                        <button onclick="loadDesktopPage()" class="btn-primary px-8 py-3 rounded-full w-full">
+                            进入电脑版
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 手机版卡片 -->
+                <div class="device-card rounded-2xl p-8">
+                    <div class="flex flex-col items-center text-center h-full">
+                        <div class="mb-6">
+                            <svg class="device-icon w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-6">手机版</h3>
+                        <button onclick="loadMobilePage()" class="btn-primary px-8 py-3 rounded-full w-full">
+                            进入手机版
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 自动检测区域 -->
+            <div class="max-w-2xl mx-auto text-center">
+                <div class="inline-flex items-center justify-center p-4 bg-slate-800/30 rounded-2xl border border-slate-700/50 mb-6">
+                    <div class="flex items-center">
+                        <div class="mr-3">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="text-left">
+                            <p class="font-medium">设备检测</p>
+                            <p id="device-info" class="text-sm text-slate-300">正在检测您的设备...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <p class="text-slate-400 text-sm mb-4 pulse">点击下方按钮根据您的设备自动选择</p>
+                <button onclick="autoDetectDevice()" class="px-6 py-3 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 rounded-full transition-colors">
+                    自动为我选择
+                </button>
+                
+                <!-- 底部信息 -->
+                <div class="mt-12 pt-6 border-t border-slate-800">
+                    <p class="text-slate-500 text-sm">© BanG Dream! It's MyGO!!!!! Fanmade Gallery</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ========================================= -->
+    <!-- 电脑版容器 (隐藏) -->
+    <!-- ========================================= -->
+    <div id="desktop-page" class="page">
+        <!-- 内容将由JavaScript动态加载 -->
+    </div>
+    
+    <!-- ========================================= -->
+    <!-- 手机版容器 (隐藏) -->
+    <!-- ========================================= -->
+    <div id="mobile-page" class="page">
+        <!-- 内容将由JavaScript动态加载 -->
+    </div>
+
+    <script>
+        // =========================================
+        // 全局变量和状态管理
+        // =========================================
+        let currentPage = 'selection';
+        let desktopPageLoaded = false;
+        let mobilePageLoaded = false;
+        
+        // =========================================
+        // 设备检测功能
+        // =========================================
+        function detectDevice() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isTablet = /iPad|Android(?!.*Mobile)|Tablet|Silk/i.test(navigator.userAgent);
+            
+            let deviceType = "桌面设备";
+            let deviceName = "电脑";
+            
+            if (isMobile && !isTablet) {
+                deviceType = "移动设备";
+                deviceName = "手机";
+            } else if (isTablet) {
+                deviceType = "平板设备";
+                deviceName = "平板电脑";
+            }
+            
+            const screenInfo = `屏幕: ${window.screen.width} × ${window.screen.height}`;
+            
+            if (document.getElementById('device-info')) {
+                document.getElementById('device-info').innerHTML = `
+                    <span class="text-indigo-300">${deviceType}</span> · ${deviceName}<br>
+                    <span class="text-slate-400">${screenInfo}</span>
+                `;
+            }
+            
+            return { isMobile, isTablet, deviceType };
+        }
+        
+        function autoDetectDevice() {
+            const deviceInfo = detectDevice();
+            
+            if (deviceInfo.isMobile && !deviceInfo.isTablet) {
+                // 手机设备
+                if (document.getElementById('device-info')) {
+                    document.getElementById('device-info').innerHTML += `<br><span class="text-green-400 mt-1 block">推荐使用手机版 →</span>`;
+                }
+                setTimeout(() => {
+                    loadMobilePage();
+                }, 800);
+            } else {
+                // 桌面或平板设备
+                if (document.getElementById('device-info')) {
+                    document.getElementById('device-info').innerHTML += `<br><span class="text-blue-400 mt-1 block">推荐使用电脑版 →</span>`;
+                }
+                setTimeout(() => {
+                    loadDesktopPage();
+                }, 800);
+            }
+        }
+        
+        // =========================================
+        // 页面切换功能
+        // =========================================
+        function switchPage(toPage) {
+            // 隐藏所有页面
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // 显示目标页面
+            document.getElementById(toPage + '-page').classList.add('active');
+            currentPage = toPage;
+            
+            // 更新浏览器历史记录
+            history.pushState({ page: toPage }, '', `#${toPage}`);
+        }
+        
+        function goBackToSelection() {
+            switchPage('selection');
+        }
+        
+        // 处理浏览器前进/后退按钮
+        window.addEventListener('popstate', function(event) {
+            if (event.state && event.state.page) {
+                switchPage(event.state.page);
+            } else {
+                switchPage('selection');
+            }
+        });
+        
+        // =========================================
+        // 动态加载电脑版
+        // =========================================
+        async function loadDesktopPage() {
+            // 显示加载状态
+            const desktopPage = document.getElementById('desktop-page');
+            desktopPage.innerHTML = `
+                <div class="h-screen w-full flex items-center justify-center bg-[#1a0b2e]">
+                    <div class="text-center">
+                        <div class="inline-block animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-400 mb-4"></div>
+                        <h1 class="text-2xl font-bold text-white mb-2">正在加载电脑版...</h1>
+                        <p class="text-slate-300">请稍候</p>
+                    </div>
+                </div>
+            `;
+            
+            // 切换页面
+            switchPage('desktop');
+            
+            // 如果已经加载过，直接显示
+            if (desktopPageLoaded) return;
+            
+            try {
+                // 加载电脑版HTML - 修改这里！！！
+                const response = await fetch('desktop.html');  // 改成这个文件名
+                if (!response.ok) throw new Error('加载失败');
+                
+                const html = await response.text();
+                desktopPage.innerHTML = html;
+                
+                // 添加返回按钮
+                const backButton = document.createElement('button');
+                backButton.className = 'back-btn';
+                backButton.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    返回选择
+                `;
+                backButton.onclick = goBackToSelection;
+                desktopPage.insertBefore(backButton, desktopPage.firstChild);
+                
+                // 标记为已加载
+                desktopPageLoaded = true;
+                
+                // 初始化电脑版脚本
+                initDesktopScripts();
+                
+            } catch (error) {
+                console.error('加载电脑版失败:', error);
+                desktopPage.innerHTML = `
+                    <div class="h-screen w-full flex items-center justify-center bg-[#1a0b2e]">
+                        <div class="text-center">
+                            <h1 class="text-2xl font-bold text-white mb-2">加载失败</h1>
+                            <p class="text-slate-300 mb-4">无法加载电脑版页面</p>
+                            <button onclick="goBackToSelection()" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white">
+                                返回选择页面
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // =========================================
+        // 动态加载手机版
+        // =========================================
+        async function loadMobilePage() {
+            // 显示加载状态
+            const mobilePage = document.getElementById('mobile-page');
+            mobilePage.innerHTML = `
+                <div class="h-screen w-full flex items-center justify-center bg-[#1a0b2e]">
+                    <div class="text-center">
+                        <div class="inline-block animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-400 mb-4"></div>
+                        <h1 class="text-2xl font-bold text-white mb-2">正在加载手机版...</h1>
+                        <p class="text-slate-300">请稍候</p>
+                    </div>
+                </div>
+            `;
+            
+            // 切换页面
+            switchPage('mobile');
+            
+            // 如果已经加载过，直接显示
+            if (mobilePageLoaded) return;
+            
+            try {
+                // 加载手机版HTML - 修改这里！！！
+                const response = await fetch('mobile.html');  // 改成这个文件名
+                if (!response.ok) throw new Error('加载失败');
+                
+                const html = await response.text();
+                mobilePage.innerHTML = html;
+                
+                // 添加返回按钮
+                const backButton = document.createElement('button');
+                backButton.className = 'back-btn';
+                backButton.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    返回选择
+                `;
+                backButton.onclick = goBackToSelection;
+                mobilePage.insertBefore(backButton, mobilePage.firstChild);
+                
+                // 标记为已加载
+                mobilePageLoaded = true;
+                
+                // 初始化手机版脚本
+                initMobileScripts();
+                
+            } catch (error) {
+                console.error('加载手机版失败:', error);
+                mobilePage.innerHTML = `
+                    <div class="h-screen w-full flex items-center justify-center bg-[#1a0b2e]">
+                        <div class="text-center">
+                            <h1 class="text-2xl font-bold text-white mb-2">加载失败</h1>
+                            <p class="text-slate-300 mb-4">无法加载手机版页面</p>
+                            <button onclick="goBackToSelection()" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white">
+                                返回选择页面
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // =========================================
+        // 电脑版脚本初始化（占位函数）
+        // =========================================
+        function initDesktopScripts() {
+            console.log('初始化电脑版脚本');
+            // 这里会自动运行 desktop.html 中的脚本
+            // 因为我们将整个HTML内容加载进来了
+            
+            // 如果您需要在加载后执行额外操作，可以在这里添加
+        }
+        
+        // =========================================
+        // 手机版脚本初始化（占位函数）
+        // =========================================
+        function initMobileScripts() {
+            console.log('初始化手机版脚本');
+            // 这里会自动运行 mobile.html 中的脚本
+        }
+        
+        // =========================================
+        // 页面初始化
+        // =========================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始设备检测
+            detectDevice();
+            
+            // 初始化星星动画
+            const stars = document.querySelectorAll('.floating-stars div');
+            stars.forEach((star, index) => {
+                const size = Math.random() * 2 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.animationDelay = `${index * 0.5}s`;
+                
+                // 随机位置
+                if (index === 0) star.style.left = `${Math.random() * 20 + 10}%`;
+                if (index === 1) star.style.right = `${Math.random() * 20 + 10}%`;
+                if (index === 2) star.style.left = `${Math.random() * 20 + 30}%`;
+                if (index === 3) star.style.right = `${Math.random() * 20 + 20}%`;
+                if (index === 4) star.style.left = `${Math.random() * 20 + 60}%`;
+            });
+            
+            // 检查URL哈希，直接跳转到对应页面
+            const hash = window.location.hash.substring(1);
+            if (hash === 'desktop') {
+                loadDesktopPage();
+            } else if (hash === 'mobile') {
+                loadMobilePage();
+            }
+            
+            // 键盘快捷键
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && currentPage !== 'selection') {
+                    goBackToSelection();
+                }
+                
+                // 按'D'键选择电脑版
+                if (event.key === 'd' || event.key === 'D') {
+                    loadDesktopPage();
+                }
+                
+                // 按'M'键选择手机版
+                if (event.key === 'm' || event.key === 'M') {
+                    loadMobilePage();
+                }
+                
+                // 按'A'键自动选择
+                if (event.key === 'a' || event.key === 'A') {
+                    autoDetectDevice();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
