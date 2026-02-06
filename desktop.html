@@ -510,6 +510,65 @@
             updatePlayState(false);
             audio.addEventListener('error', function() { console.error('音频加载失败'); if (statusText) statusText.textContent = 'ERROR'; });
         });
+        // =========================================
+// 确保页面加载完成后初始化画廊
+// =========================================
+document.addEventListener('DOMContentLoaded', function() {
+    // 延迟一点确保所有元素都已加载
+    setTimeout(() => {
+        initGallery();
+        console.log('电脑版画廊已初始化，卡片数量:', document.querySelectorAll('#card-grid > div').length);
+    }, 100);
+});
+
+// =========================================
+// 同时暴露给全局，让主页可以调用
+// =========================================
+window.initDesktopScripts = function() {
+    console.log('初始化电脑版脚本...');
+    
+    // 1. 重新绑定音乐播放器
+    const audio = document.getElementById('bgm-audio');
+    const player = document.getElementById('music-player-container');
+    
+    if (player && audio) {
+        player.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (audio.paused) {
+                audio.play().catch(err => {
+                    console.log('播放失败:', err);
+                });
+            } else {
+                audio.pause();
+            }
+        };
+    }
+    
+    // 2. 初始化画廊（如果还没初始化）
+    if (typeof initGallery === 'function') {
+        initGallery();
+    } else {
+        console.warn('initGallery函数未定义，等待DOM加载...');
+        setTimeout(() => {
+            if (typeof initGallery === 'function') {
+                initGallery();
+            }
+        }, 300);
+    }
+    
+    // 3. 输出调试信息
+    console.log('检查元素: smooth-content=', !!document.querySelector('[smooth-content]'));
+    console.log('检查元素: gallery-section=', !!document.querySelector('[gallery-section]'));
+    console.log('检查元素: card-grid=', !!document.querySelector('#card-grid'));
+    
+    const cardCount = document.querySelectorAll('#card-grid > div').length;
+    console.log('找到卡片数量:', cardCount);
+    
+    console.log('电脑版初始化完成');
+};
     </script>
 </body>
 </html>
+
