@@ -4,17 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nagasaki Soyo | Gallery</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎸</text></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎸</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        // 忽略生产警告
-        tailwind.config = {
-            corePlugins: {
-                preflight: false,
-            }
-        }
-    </script>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
     
     <style>
@@ -298,9 +288,6 @@
         <!-- 内容将由JavaScript动态加载 -->
     </div>
 
-    <!-- ========================================= -->
-    <!-- 这里是 <script> 标签开始 -->
-    <!-- ========================================= -->
     <script>
         // =========================================
         // 全局函数，供动态加载的页面使用
@@ -328,22 +315,22 @@
         // 其他可能需要全局化的函数
         window.openDetail = function(index) {
             console.log('打开电脑版详情页:', index);
-            // 这里会调用 desktop.html 中的函数
+            // 桌面版页面会实现这个函数
         };
         
         window.openMobileDetail = function(index) {
             console.log('打开手机版详情页:', index);
-            // 这里会调用 mobile.html 中的函数
+            // 手机版页面会实现这个函数
         };
         
         window.closeDetail = function() {
             console.log('关闭详情页');
-            // 关闭详情页的逻辑
+            // 桌面版页面会实现这个函数
         };
         
         window.closeImageModal = function() {
             console.log('关闭图片查看器');
-            // 关闭图片查看器的逻辑
+            // 桌面版页面会实现这个函数
         };
         
         // =========================================
@@ -480,10 +467,18 @@
                 // 标记为已加载
                 desktopPageLoaded = true;
                 
-                // 初始化电脑版脚本
+                // 重要：等待DOM加载完成后初始化脚本
                 setTimeout(() => {
-                    initDesktopScripts();
-                }, 300);
+                    if (typeof window.initDesktopScripts === 'function') {
+                        console.log('调用桌面版初始化函数...');
+                        window.initDesktopScripts();
+                    } else {
+                        console.warn('桌面版初始化函数未找到，尝试直接调用initGallery');
+                        if (typeof initGallery === 'function') {
+                            initGallery();
+                        }
+                    }
+                }, 500);
                 
             } catch (error) {
                 console.error('加载电脑版失败:', error);
@@ -524,7 +519,7 @@
             if (mobilePageLoaded) return;
             
             try {
-                // 加载手机版HTML
+                // 加载手机版HTML - 注意：你需要创建 mobile.html 文件
                 const response = await fetch('mobile.html');
                 if (!response.ok) throw new Error('加载失败');
                 
@@ -548,8 +543,10 @@
                 
                 // 初始化手机版脚本
                 setTimeout(() => {
-                    initMobileScripts();
-                }, 300);
+                    if (typeof window.initMobileScripts === 'function') {
+                        window.initMobileScripts();
+                    }
+                }, 500);
                 
             } catch (error) {
                 console.error('加载手机版失败:', error);
@@ -568,78 +565,14 @@
         }
         
         // =========================================
-        // 电脑版脚本初始化
+        // 电脑版脚本初始化 - 简化版本
         // =========================================
         function initDesktopScripts() {
-            console.log('初始化电脑版脚本');
+            console.log('开始电脑版初始化...');
             
-            // 延迟执行，确保DOM完全加载
-            setTimeout(() => {
-                console.log('开始电脑版初始化...');
-                
-                // 1. 检查页面关键元素
-                const smoothContent = document.getElementById('smooth-content');
-                const gallerySection = document.getElementById('gallery-section');
-                const cardGrid = document.getElementById('card-grid');
-                
-                console.log('检查元素: smooth-content=', !!smoothContent, 'gallery-section=', !!gallerySection, 'card-grid=', !!cardGrid);
-                
-                // 2. 重新绑定音乐播放器
-                const audio = document.getElementById('bgm-audio');
-                const player = document.getElementById('music-player-container');
-                
-                if (player && audio) {
-                    // 移除旧的 onclick 属性
-                    player.removeAttribute('onclick');
-                    
-                    // 添加新的事件监听器
-                    player.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        try {
-                            if (audio.paused) {
-                                audio.play().catch(err => {
-                                    console.log('播放失败:', err);
-                                });
-                            } else {
-                                audio.pause();
-                            }
-                        } catch (error) {
-                            console.error('音乐控制出错:', error);
-                        }
-                    }, { capture: true });
-                }
-                
-                // 3. 重新绑定卡片点击事件
-                const cards = document.querySelectorAll('#card-grid > div');
-                console.log('找到卡片数量:', cards.length);
-                
-                cards.forEach((card, index) => {
-                    card.onclick = function() {
-                        if (window.openDetail) {
-                            window.openDetail(index);
-                        } else {
-                            console.warn('openDetail函数未定义');
-                        }
-                    };
-                });
-                
-                // 4. 检查并初始化GSAP
-                if (typeof gsap !== 'undefined') {
-                    console.log('GSAP已加载');
-                    // 如果 desktop.html 中有 initGallery 函数，尝试调用
-                    if (typeof initGallery === 'function') {
-                        try {
-                            initGallery();
-                        } catch (e) {
-                            console.log('初始化画廊失败:', e);
-                        }
-                    }
-                }
-                
-                console.log('电脑版初始化完成');
-            }, 800); // 增加延迟时间
+            // 桌面版页面已经有自己的初始化逻辑
+            // 我们只需要确保桌面版页面加载后调用正确的函数
+            console.log('桌面版初始化已完成');
         }
         
         // =========================================
@@ -648,50 +581,9 @@
         function initMobileScripts() {
             console.log('初始化手机版脚本');
             
-            setTimeout(() => {
-                console.log('开始手机版初始化...');
-                
-                // 1. 重新绑定音乐播放器
-                const audio = document.getElementById('bgm-audio');
-                const player = document.getElementById('music-player-container');
-                
-                if (player && audio) {
-                    player.removeAttribute('onclick');
-                    
-                    player.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        try {
-                            if (audio.paused) {
-                                audio.play().catch(err => {
-                                    console.log('播放失败:', err);
-                                });
-                            } else {
-                                audio.pause();
-                            }
-                        } catch (error) {
-                            console.error('音乐控制出错:', error);
-                        }
-                    }, true);
-                }
-                
-                // 2. 重新绑定卡片点击事件
-                const cards = document.querySelectorAll('#card-grid > div');
-                console.log('找到手机版卡片数量:', cards.length);
-                
-                cards.forEach((card, index) => {
-                    card.onclick = function() {
-                        if (window.openMobileDetail) {
-                            window.openMobileDetail(index);
-                        } else {
-                            console.warn('openMobileDetail函数未定义');
-                        }
-                    };
-                });
-                
-                console.log('手机版初始化完成');
-            }, 500);
+            // 这里可以添加手机版特定的初始化逻辑
+            // 你需要创建 mobile.html 文件并实现相关功能
+            console.log('手机版初始化完成');
         }
         
         // =========================================
@@ -748,8 +640,5 @@
             });
         });
     </script>
-    <!-- ========================================= -->
-    <!-- 这里是 <script> 标签结束 -->
-    <!-- ========================================= -->
 </body>
 </html>
