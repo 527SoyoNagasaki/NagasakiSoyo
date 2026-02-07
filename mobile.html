@@ -447,9 +447,10 @@
 </div>
 
 <script>
-    let mainAudioTime = 0;
-    let isDetailAudioPlaying = false;
-    let wasMainAudioPlaying = false;
+    // 改用 window 全局对象，防止重复声明报错
+    window.mainAudioTime = window.mainAudioTime || 0;
+    window.isDetailAudioPlaying = window.isDetailAudioPlaying || false;
+    window.wasMainAudioPlaying = window.wasMainAudioPlaying || false;
 
     const lenis = new Lenis({ duration: 1.2, smooth: true });
     function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
@@ -1145,7 +1146,7 @@
         const mainAudio = document.getElementById('bgm-audio');
         const detailAudio = document.getElementById('detail-bgm-audio');
         
-        if (isDetailAudioPlaying) {
+        if (window.isDetailAudioPlaying){
             if (detailAudio) {
                 detailAudio.pause();
                 detailAudio.currentTime = 0;
@@ -1188,7 +1189,7 @@
     statusText.textContent = 'PAUSED';
 
     function toggleMusicPlayer() {
-        if (isDetailAudioPlaying) {
+        if (window.isDetailAudioPlaying){
             return;
         }
         
@@ -1200,7 +1201,7 @@
     }
 
     audio.addEventListener('play', () => {
-        if (isDetailAudioPlaying) return;
+        if (window.isDetailAudioPlaying)return;
         
         isPlaying = true;
         playerContainer.classList.add('is-playing');
@@ -1218,7 +1219,7 @@
     });
 
     audio.addEventListener('pause', () => {
-        if (isDetailAudioPlaying) return;
+        if (window.isDetailAudioPlaying)return;
         
         isPlaying = false;
         playerContainer.classList.remove('is-playing');
@@ -1238,3 +1239,4 @@
 </body>
 
 </html>
+
