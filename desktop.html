@@ -73,29 +73,7 @@
     </style>
 </head>
 <body>
-    <div id="music-player-container" class="fixed top-32 right-0 z-[9999] flex items-center bg-slate-900/60 backdrop-blur-md border-l border-y border-white/20 rounded-l-full py-2 pl-4 pr-2 cursor-pointer transition-transform duration-500 ease-out shadow-lg group hover:shadow-blue-500/20">
-        <audio id="bgm-audio" loop>    
-            <source src="https://cdn.kedao.ggss.club/2026-1-31-3-3-30-ショパン「雨だれ」 - 藤田淳平-file.mp3" type="audio/mpeg">
-        </audio>
-        <audio id="detail-bgm-audio" loop>
-            <source src="https://cdn.kedao.ggss.club/2026-1-31-5-5-8-soyo - キリトリセン（剪切线） covered by そよ-file.mp3" type="audio/mpeg">            
-        </audio>
-        <div class="relative w-8 h-8 flex items-center justify-center mr-3">
-            <div id="icon-playing" class="music-wave">
-                <div class="music-bar"></div>
-                <div class="music-bar"></div>
-                <div class="music-bar"></div>
-                <div class="music-bar"></div>
-            </div>
-            <svg id="icon-paused" class="w-5 h-5 text-white hidden" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z"/>
-            </svg>
-        </div>
-        <div class="flex flex-col justify-center pr-4 border-l border-white/10 pl-3">
-            <span class="text-[10px] text-blue-300 font-bold tracking-widest uppercase">ショパン「雨だれ」</span>
-            <span id="music-status-text" class="text-xs text-white font-bold tracking-wider whitespace-nowrap">PLAYING</span>
-        </div>
-    </div>
+    
     <div id="smooth-wrapper">
         <div id="smooth-content">
             <section class="h-screen w-full flex items-center justify-center relative z-10" 
@@ -182,8 +160,6 @@
         </div>
     </div>
     <script>
-        let mainAudioTime = 0;
-        let isDetailAudioPlaying = false;
         const lenis = new Lenis({ duration: 1.5, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), smooth: true });
         function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
         requestAnimationFrame(raf);
@@ -283,16 +259,17 @@
             const theme = assets.themes[card.attr];
             const container = document.getElementById('detail-container');
             const modal = document.getElementById('detail-modal');
-            if (card.id === "1825") {
-                const mainAudio = document.getElementById('bgm-audio');
-                mainAudioTime = mainAudio.currentTime;
-                mainAudio.pause();
-                const detailAudio = document.getElementById('detail-bgm-audio');
-                if (detailAudio) {
-                    detailAudio.currentTime = 0;
-                    detailAudio.play().then(() => { isDetailAudioPlaying = true; }).catch(e => { console.warn("详情页音乐播放失败:", e); });
-                }
-            }
+if (card.id === "1825") {
+    // 使用全局函数控制音乐
+    if (typeof window.pauseMainMusic === 'function') {
+        window.pauseMainMusic();
+    }
+    if (typeof window.playDetailMusic === 'function') {
+        window.playDetailMusic();
+        // 添加状态标记
+        window.isDetailAudioPlaying = true;
+    }
+}
             lenis.stop();
             const getStars = (src) => Array(card.rarity).fill(`<img class="h-4 w-auto object-contain" src="${src}">`).join('');
             container.innerHTML = `<main class="relative w-full h-full bg-white rounded-[32px] shadow-2xl overflow-hidden flex flex-col md:flex-row">
@@ -414,13 +391,13 @@
         function closeDetail() {
             const modal = document.getElementById('detail-modal');
             modal.classList.remove('active');
-            if (isDetailAudioPlaying) {
-                const detailAudio = document.getElementById('detail-bgm-audio');
-                if (detailAudio) { detailAudio.pause(); detailAudio.currentTime = 0; }
-                isDetailAudioPlaying = false;
-                const mainAudio = document.getElementById('bgm-audio');
-                if (mainAudio) { mainAudio.currentTime = mainAudioTime; mainAudio.play().catch(e => { console.log("音乐自动恢复:", e.name); }); }
-            }
+if (typeof window.isDetailAudioPlaying !== 'undefined' && window.isDetailAudioPlaying) {
+    // 使用全局函数恢复音乐
+    if (typeof window.resumeMainMusic === 'function') {
+        window.resumeMainMusic();
+    }
+    window.isDetailAudioPlaying = false;
+}
             lenis.start();
         }
         const imageModal = document.getElementById('image-modal');
@@ -510,65 +487,27 @@
             updatePlayState(false);
             audio.addEventListener('error', function() { console.error('音频加载失败'); if (statusText) statusText.textContent = 'ERROR'; });
         });
-        // =========================================
-// 确保页面加载完成后初始化画廊
-// =========================================
-document.addEventListener('DOMContentLoaded', function() {
-    // 延迟一点确保所有元素都已加载
-    setTimeout(() => {
-        initGallery();
-        console.log('电脑版画廊已初始化，卡片数量:', document.querySelectorAll('#card-grid > div').length);
-    }, 100);
-});
+
 
 // =========================================
 // 同时暴露给全局，让主页可以调用
 // =========================================
 window.initDesktopScripts = function() {
     console.log('初始化电脑版脚本...');
+    initGallery(); // 确保初始化画廊
     
-    // 1. 重新绑定音乐播放器
-    const audio = document.getElementById('bgm-audio');
-    const player = document.getElementById('music-player-container');
-    
-    if (player && audio) {
-        player.onclick = function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            if (audio.paused) {
-                audio.play().catch(err => {
-                    console.log('播放失败:', err);
-                });
-            } else {
-                audio.pause();
-            }
-        };
+    // 初始化音乐状态变量
+    if (typeof window.isDetailAudioPlaying === 'undefined') {
+        window.isDetailAudioPlaying = false;
     }
-    
-    // 2. 初始化画廊（如果还没初始化）
-    if (typeof initGallery === 'function') {
-        initGallery();
-    } else {
-        console.warn('initGallery函数未定义，等待DOM加载...');
-        setTimeout(() => {
-            if (typeof initGallery === 'function') {
-                initGallery();
-            }
-        }, 300);
-    }
-    
-    // 3. 输出调试信息
-    console.log('检查元素: smooth-content=', !!document.querySelector('[smooth-content]'));
-    console.log('检查元素: gallery-section=', !!document.querySelector('[gallery-section]'));
-    console.log('检查元素: card-grid=', !!document.querySelector('#card-grid'));
-    
-    const cardCount = document.querySelectorAll('#card-grid > div').length;
-    console.log('找到卡片数量:', cardCount);
     
     console.log('电脑版初始化完成');
 };
+        
+        // 确保DOM加载后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            initGallery();
+        });
     </script>
 </body>
 </html>
-
