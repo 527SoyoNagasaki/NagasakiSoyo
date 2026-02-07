@@ -453,8 +453,15 @@ async function loadDesktopPage() {
     const desktopPage = document.getElementById('desktop-page');
     
     // 添加仓库路径检测
-    const isGitHubPages = window.location.hostname.includes('github.io');
-    const basePath = isGitHubPages ? '/NagasakiSoyo/' : '/';
+function getBasePath() {
+    const pathSegments = window.location.pathname.split('/');
+    // 对于 GitHub Pages: ["", "NagasakiSoyo", ""]
+    if (pathSegments.length > 2 && pathSegments[1] === 'NagasakiSoyo') {
+        return '/NagasakiSoyo/';
+    }
+    return '/';
+}
+const basePath = getBasePath();
     
     try {
         const response = await fetch(`${basePath}desktop.html`);
@@ -811,6 +818,7 @@ window.addEventListener('error', function(e) {
     </script>
 </body>
 </html>
+
 
 
 
