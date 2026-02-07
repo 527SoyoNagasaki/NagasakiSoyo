@@ -445,48 +445,68 @@ if (typeof window.isDetailAudioPlaying !== 'undefined' && window.isDetailAudioPl
         imageModal.addEventListener('click', (e) => { if (e.target === imageModal) closeImageModal(); });
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && imageModal.classList.contains('active')) closeImageModal(); });
         initGallery();
-        document.addEventListener('DOMContentLoaded', function() {
+        window.initMusicPlayer = function() {
             const player = document.getElementById('music-player-container');
             const audio = document.getElementById('bgm-audio');
             const iconPlaying = document.getElementById('icon-playing');
             const iconPaused = document.getElementById('icon-paused');
             const statusText = document.getElementById('music-status-text');
-            if (!player || !audio) return;
+            
+            if (!player || !audio) {
+                console.warn('音乐播放器元素未找到');
+                return;
+            }
+            
             let hoverTimer = null;
             let autoHideTimer = null;
             let isExpanded = false;
+            
             player.addEventListener('mouseenter', function() {
                 if (autoHideTimer) { clearTimeout(autoHideTimer); autoHideTimer = null; }
                 if (!isExpanded) { player.classList.add('expanded'); isExpanded = true; }
             });
+            
             player.addEventListener('mouseleave', function() {
                 if (autoHideTimer) { clearTimeout(autoHideTimer); }
                 autoHideTimer = setTimeout(() => {
                     if (isExpanded) { player.classList.remove('expanded'); isExpanded = false; }
                 }, 500);
             });
+            
             let isPlaying = false;
+            
             function togglePlayback() {
                 if (isPlaying) { audio.pause(); } else { audio.play().catch(e => { console.warn("自动播放被阻止:", e); }); }
-                updatePlayState(!isPlaying);
+                // updatePlayState 会由 audio 的事件触发
             }
+            
             function updatePlayState(playing) {
                 isPlaying = playing;
-                if (!isDetailAudioPlaying) {
+                if (!window.isDetailAudioPlaying) {
                     if (iconPlaying) iconPlaying.style.display = playing ? 'flex' : 'none';
                     if (iconPaused) iconPaused.style.display = playing ? 'none' : 'block';
                     if (statusText) statusText.textContent = playing ? 'PLAYING' : 'PAUSED';
                     if (iconPlaying) { iconPlaying.classList.toggle('paused', !playing); }
                 }
             }
+            
             audio.addEventListener('play', () => updatePlayState(true));
             audio.addEventListener('pause', () => updatePlayState(false));
+            
             player.addEventListener('click', function(e) {
                 if (isExpanded) { togglePlayback(); e.stopPropagation(); }
             });
+            
+            // 初始化状态
             updatePlayState(false);
-            audio.addEventListener('error', function() { console.error('音频加载失败'); if (statusText) statusText.textContent = 'ERROR'; });
-        });
+            
+            audio.addEventListener('error', function() { 
+                console.error('音频加载失败'); 
+                if (statusText) statusText.textContent = 'ERROR'; 
+            });
+            
+            console.log('音乐播放器初始化完成');
+        };
 
 
 // =========================================
@@ -494,20 +514,26 @@ if (typeof window.isDetailAudioPlaying !== 'undefined' && window.isDetailAudioPl
 // =========================================
 window.initDesktopScripts = function() {
     console.log('初始化电脑版脚本...');
-    initGallery(); // 确保初始化画廊
     
-    // 初始化音乐状态变量
+    // 1. 初始化画廊
+    if (typeof initGallery === 'function') {
+        initGallery();
+    }
+    
+    // 2. 初始化音乐播放器 (新增)
+    if (typeof window.initMusicPlayer === 'function') {
+        window.initMusicPlayer();
+    }
+    
+    // 3. 初始化音乐状态变量
     if (typeof window.isDetailAudioPlaying === 'undefined') {
         window.isDetailAudioPlaying = false;
     }
     
     console.log('电脑版初始化完成');
 };
-        
-        // 确保DOM加载后执行
-        document.addEventListener('DOMContentLoaded', function() {
-            initGallery();
-        });
+
     </script>
 </body>
 </html>
+
