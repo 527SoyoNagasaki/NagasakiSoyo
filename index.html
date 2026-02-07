@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nagasaki Soyo | Gallery</title>
+    
+    <!-- ============= 资源预加载 ============= -->
+    <link rel="preload" href="desktop.html" as="document">
+    <link rel="preload" href="mobile.html" as="document">
+    <link rel="preload" href="https://cdn.kedao.ggss.club/2026-1-31-3-3-30-ショパン「雨だれ」 - 藤田淳平-file.mp3" as="audio">
+    <link rel="preload" href="https://cdn.kedao.ggss.club/2026-1-31-5-5-8-soyo - キリトリセン（剪切线） covered by そよ-file.mp3" as="audio">
+    <link rel="preload" href="https://cdn.kedao.ggss.club/2026-1-24-16-35-29-image-file.png" as="image">
+    <link rel="preload" href="https://cdn.kedao.ggss.club/2026-1-24-15-19-0-c5ca4e70503c4c7ca87d496cb13d09ff-file.png" as="image">
+    <link rel="preload" href="https://cdn.kedao.ggss.club/2026-1-31-4-53-36-273c3196a9fc6c37fc7f24e53109decf2815073-file.jpg" as="image">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
     
@@ -290,6 +300,19 @@
 
     <script>
         // =========================================
+        // 全局错误监控
+        // =========================================
+        window.addEventListener('error', function(event) {
+            console.error('全局错误:', {
+                message: event.message,
+                filename: event.filename,
+                lineno: event.lineno,
+                colno: event.colno,
+                error: event.error
+            });
+        });
+        
+        // =========================================
         // 全局函数，供动态加载的页面使用
         // =========================================
         window.toggleMusicPlayer = function() {
@@ -423,54 +446,77 @@
         });
         
         // =========================================
-// 动态加载电脑版 (修改后)
-// =========================================
-async function loadDesktopPage() {
-    // 添加仓库路径检测
-    const isGitHubPages = window.location.hostname.includes('github.io');
-    const basePath = isGitHubPages ? '/NagasakiSoyo/' : '/';
-    
-    try {
-        const response = await fetch(`${basePath}desktop.html`);
-        if (!response.ok) throw new Error(`HTTP错误! 状态: ${response.status}`);
-        
-        const html = await response.text();
-        desktopPage.innerHTML = html;
-        
-        // ...其余代码不变
-        
-        // 添加超时处理
-        const initTimeout = setTimeout(() => {
-            if (!window.initDesktopScripts) {
-                console.warn('超时后手动初始化');
-                if (typeof initGallery === 'function') initGallery();
+        // 动态加载电脑版 (修改后)
+        // =========================================
+        async function loadDesktopPage() {
+            // 添加仓库路径检测
+            const isGitHubPages = window.location.hostname.includes('github.io');
+            const basePath = isGitHubPages ? '/NagasakiSoyo/' : '/';
+            
+            try {
+                const response = await fetch(`${basePath}desktop.html`);
+                if (!response.ok) throw new Error(`HTTP错误! 状态: ${response.status}`);
+                
+                const html = await response.text();
+                desktopPage.innerHTML = html;
+                
+                // 添加返回按钮
+                const backButton = document.createElement('button');
+                backButton.className = 'back-btn';
+                backButton.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    返回选择
+                `;
+                backButton.onclick = goBackToSelection;
+                desktopPage.insertBefore(backButton, desktopPage.firstChild);
+                
+                // 标记为已加载
+                desktopPageLoaded = true;
+                
+                // 初始化电脑版脚本
+                setTimeout(() => {
+                    if (typeof window.initDesktopScripts === 'function') {
+                        window.initDesktopScripts();
+                    } else {
+                        console.warn('initDesktopScripts 未定义，尝试手动初始化');
+                        if (typeof initGallery === 'function') initGallery();
+                    }
+                }, 500);
+                
+                // 添加超时处理
+                const initTimeout = setTimeout(() => {
+                    if (!window.initDesktopScripts) {
+                        console.warn('超时后手动初始化');
+                        if (typeof initGallery === 'function') initGallery();
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                console.error('加载失败:', {
+                    error: error.message,
+                    requestedUrl: `${basePath}desktop.html`,
+                    currentUrl: window.location.href,
+                    repoPath: basePath
+                });
+                
+                desktopPage.innerHTML = `
+                    <div class="h-screen w-full flex items-center justify-center bg-[#1a0b2e]">
+                        <div class="text-center p-6 bg-slate-800/80 rounded-2xl">
+                            <h1 class="text-2xl font-bold text-white mb-4">加载失败</h1>
+                            <div class="text-left mb-6 p-4 bg-slate-900/50 rounded-lg">
+                                <p class="text-slate-300 mb-2">请求URL: ${basePath}desktop.html</p>
+                                <p class="text-slate-300">错误信息: ${error.message}</p>
+                            </div>
+                            <button onclick="goBackToSelection()" 
+                                    class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-medium">
+                                返回选择页面
+                            </button>
+                        </div>
+                    </div>`;
             }
-        }, 2000);
-        
-    } catch (error) {
-        console.error('加载失败:', {
-            error: error.message,
-            requestedUrl: `${basePath}desktop.html`,
-            currentUrl: window.location.href,
-            repoPath: basePath
-        });
-        
-        desktopPage.innerHTML = `
-            <div class="h-screen w-full flex items-center justify-center bg-[#1a0b2e]">
-                <div class="text-center p-6 bg-slate-800/80 rounded-2xl">
-                    <h1 class="text-2xl font-bold text-white mb-4">加载失败</h1>
-                    <div class="text-left mb-6 p-4 bg-slate-900/50 rounded-lg">
-                        <p class="text-slate-300 mb-2">请求URL: ${basePath}desktop.html</p>
-                        <p class="text-slate-300">错误信息: ${error.message}</p>
-                    </div>
-                    <button onclick="goBackToSelection()" 
-                            class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-medium">
-                        返回选择页面
-                    </button>
-                </div>
-            </div>`;
-    }
-}
+        }
         
         // =========================================
         // 动态加载手机版
@@ -495,8 +541,12 @@ async function loadDesktopPage() {
             if (mobilePageLoaded) return;
             
             try {
-                // 加载手机版HTML - 注意：你需要创建 mobile.html 文件
-                const response = await fetch('mobile.html');
+                // 添加仓库路径检测
+                const isGitHubPages = window.location.hostname.includes('github.io');
+                const basePath = isGitHubPages ? '/NagasakiSoyo/' : '/';
+                
+                // 加载手机版HTML
+                const response = await fetch(`${basePath}mobile.html`);
                 if (!response.ok) throw new Error('加载失败');
                 
                 const html = await response.text();
@@ -563,6 +613,38 @@ async function loadDesktopPage() {
         }
         
         // =========================================
+        // 路径调试工具
+        // =========================================
+        console.log('当前路径:', window.location.href);
+        console.log('仓库路径:', window.location.hostname === '527soyonagasaki.github.io' 
+            ? '/NagasakiSoyo/' 
+            : '/');
+        
+        // 监听资源加载错误
+        window.addEventListener('error', function(e) {
+          if (e.target.tagName === 'IMG' || 
+              e.target.tagName === 'SCRIPT' || 
+              e.target.tagName === 'LINK' ||
+              e.target.tagName === 'AUDIO') {
+              
+            console.error('资源加载失败:', e.target.src || e.target.href);
+            
+            // 显示用户友好的错误提示
+            const errorElement = document.createElement('div');
+            errorElement.className = 'fixed bottom-4 left-4 bg-red-500 text-white p-3 rounded-lg z-[9999]';
+            errorElement.innerHTML = `
+                <p class="font-bold">资源加载失败</p>
+                <p class="text-xs">${e.target.src || e.target.href}</p>
+            `;
+            document.body.appendChild(errorElement);
+            
+            setTimeout(() => {
+                errorElement.remove();
+            }, 5000);
+          }
+        }, true);
+        
+        // =========================================
         // 页面初始化
         // =========================================
         document.addEventListener('DOMContentLoaded', function() {
@@ -615,7 +697,59 @@ async function loadDesktopPage() {
                 }
             });
         });
+        
+        // ============= 全局音乐控制函数 =============
+        let mainAudioTime = 0;
+        let isDetailAudioPlaying = false;
+
+        function toggleMusicPlayer() {
+            const audio = document.getElementById('bgm-audio');
+            if (!audio) return;
+            
+            if (audio.paused) {
+                audio.play().catch(e => console.warn("播放失败:", e));
+            } else {
+                audio.pause();
+            }
+            updatePlayState(!audio.paused);
+        }
+
+        function pauseMainMusic() {
+            const audio = document.getElementById('bgm-audio');
+            if (audio) {
+                mainAudioTime = audio.currentTime;
+                audio.pause();
+            }
+        }
+
+        function playDetailMusic() {
+            const detailAudio = document.getElementById('detail-bgm-audio');
+            if (detailAudio) {
+                detailAudio.currentTime = 0;
+                detailAudio.play().then(() => {
+                    isDetailAudioPlaying = true;
+                }).catch(e => console.warn("详情页音乐播放失败:", e));
+            }
+        }
+
+        function resumeMainMusic() {
+            const audio = document.getElementById('bgm-audio');
+            if (audio) {
+                audio.currentTime = mainAudioTime;
+                audio.play().catch(e => console.log("音乐恢复失败:", e));
+            }
+        }
+
+        function updatePlayState(playing) {
+            const iconPlaying = document.getElementById('icon-playing');
+            const iconPaused = document.getElementById('icon-paused');
+            const statusText = document.getElementById('music-status-text');
+            
+            if (iconPlaying) iconPlaying.style.display = playing ? 'flex' : 'none';
+            if (iconPaused) iconPaused.style.display = playing ? 'none' : 'block';
+            if (statusText) statusText.textContent = playing ? 'PLAYING' : 'PAUSED';
+            if (iconPlaying) iconPlaying.classList.toggle('paused', !playing);
+        }
     </script>
 </body>
 </html>
-
