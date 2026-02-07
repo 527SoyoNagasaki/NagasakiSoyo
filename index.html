@@ -604,13 +604,46 @@ async function loadMobilePage() {
         // =========================================
         // 电脑版脚本初始化 - 简化版本
         // =========================================
-        function initDesktopScripts() {
-            console.log('开始电脑版初始化...');
-            
-            // 桌面版页面已经有自己的初始化逻辑
-            // 我们只需要确保桌面版页面加载后调用正确的函数
-            console.log('桌面版初始化已完成');
+function initDesktopScripts() {
+    console.log('开始电脑版初始化...');
+    
+    try {
+        // 初始化音乐播放器
+        if (typeof initMusicPlayer === 'function') {
+            initMusicPlayer();
+            console.log('音乐播放器初始化完成');
         }
+        
+        // 初始化画廊
+        if (typeof initGallery === 'function') {
+            initGallery();
+            console.log('画廊初始化完成');
+        }
+        
+        // 初始化卡片交互
+        if (typeof initCardInteractions === 'function') {
+            initCardInteractions();
+            console.log('卡片交互初始化完成');
+        }
+        
+        console.log('桌面版初始化已完成');
+    } catch (error) {
+        console.error('桌面版初始化失败:', error);
+        
+        // 显示错误提示
+        const errorElement = document.createElement('div');
+        errorElement.className = 'fixed top-4 right-4 bg-red-500 text-white p-3 rounded-lg z-[9999]';
+        errorElement.innerHTML = `
+            <p class="font-bold">初始化错误</p>
+            <p class="text-xs">${error.message}</p>
+        `;
+        document.body.appendChild(errorElement);
+        
+        setTimeout(() => {
+            errorElement.remove();
+        }, 5000);
+    }
+}
         
         // =========================================
         // 手机版脚本初始化
@@ -632,28 +665,36 @@ async function loadMobilePage() {
             : '/');
         
         // 监听资源加载错误
-        window.addEventListener('error', function(e) {
-          if (e.target.tagName === 'IMG' || 
-              e.target.tagName === 'SCRIPT' || 
-              e.target.tagName === 'LINK' ||
-              e.target.tagName === 'AUDIO') {
-              
-            console.error('资源加载失败:', e.target.src || e.target.href);
-            
-            // 显示用户友好的错误提示
-            const errorElement = document.createElement('div');
-            errorElement.className = 'fixed bottom-4 left-4 bg-red-500 text-white p-3 rounded-lg z-[9999]';
-            errorElement.innerHTML = `
-                <p class="font-bold">资源加载失败</p>
-                <p class="text-xs">${e.target.src || e.target.href}</p>
-            `;
-            document.body.appendChild(errorElement);
-            
-            setTimeout(() => {
-                errorElement.remove();
-            }, 5000);
-          }
-        }, true);
+window.addEventListener('error', function(e) {
+  if (e.target.tagName === 'IMG' || 
+      e.target.tagName === 'SCRIPT' || 
+      e.target.tagName === 'LINK' ||
+      e.target.tagName === 'AUDIO') {
+      
+    const resourceUrl = e.target.src || e.target.href;
+    
+    // 排除页面URL本身
+    if (resourceUrl === window.location.href) {
+      console.log('忽略页面URL加载检查:', resourceUrl);
+      return;
+    }
+    
+    console.error('资源加载失败:', resourceUrl);
+    
+    // 显示用户友好的错误提示
+    const errorElement = document.createElement('div');
+    errorElement.className = 'fixed bottom-4 left-4 bg-red-500 text-white p-3 rounded-lg z-[9999]';
+    errorElement.innerHTML = `
+        <p class="font-bold">资源加载失败</p>
+        <p class="text-xs">${resourceUrl}</p>
+    `;
+    document.body.appendChild(errorElement);
+    
+    setTimeout(() => {
+        errorElement.remove();
+    }, 5000);
+  }
+}, true);
         
         // =========================================
         // 页面初始化
@@ -764,4 +805,5 @@ async function loadMobilePage() {
     </script>
 </body>
 </html>
+
 
