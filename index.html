@@ -664,7 +664,9 @@ function initDesktopScripts() {
             ? '/NagasakiSoyo/' 
             : '/');
         
-        // 监听资源加载错误
+// =========================================
+// 资源加载错误监控（修复版）
+// =========================================
 window.addEventListener('error', function(e) {
   if (e.target.tagName === 'IMG' || 
       e.target.tagName === 'SCRIPT' || 
@@ -673,9 +675,13 @@ window.addEventListener('error', function(e) {
       
     const resourceUrl = e.target.src || e.target.href;
     
-    // 排除页面URL本身
-    if (resourceUrl === window.location.href) {
-      console.log('忽略页面URL加载检查:', resourceUrl);
+    // 排除无效资源检查
+    if (!resourceUrl || 
+        resourceUrl === window.location.href || 
+        resourceUrl.endsWith('/') ||
+        resourceUrl.startsWith('blob:') ||
+        resourceUrl.includes('#')) {
+      console.log('忽略无效资源检查:', resourceUrl);
       return;
     }
     
@@ -805,5 +811,6 @@ window.addEventListener('error', function(e) {
     </script>
 </body>
 </html>
+
 
 
