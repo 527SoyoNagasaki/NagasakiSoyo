@@ -300,6 +300,29 @@
 
     <script>
         // =========================================
+// ✅ 新增：辅助函数 - 强制执行容器内的脚本
+// =========================================
+function executeScripts(container) {
+    // 找到容器内所有的 script 标签
+    const scripts = container.querySelectorAll('script');
+    
+    Array.from(scripts).forEach(oldScript => {
+        // 创建一个新的 script 标签
+        const newScript = document.createElement('script');
+        
+        // 复制所有属性 (src, type 等)
+        Array.from(oldScript.attributes).forEach(attr => {
+            newScript.setAttribute(attr.name, attr.value);
+        });
+        
+        // 复制脚本内容
+        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+        
+        // 用新的替换旧的（这会触发浏览器执行脚本）
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+    });
+}
+        // =========================================
         // 全局错误监控
         // =========================================
         window.addEventListener('error', function(event) {
@@ -467,11 +490,14 @@ const basePath = getBasePath();
         const response = await fetch(`${basePath}desktop.html`);
         if (!response.ok) throw new Error(`HTTP错误! 状态: ${response.status}`);
         
-        const html = await response.text();
+const html = await response.text();
         desktopPage.innerHTML = html;
         
+        // 【关键修改】手动执行加载进来的 HTML 里的脚本
+        executeScripts(desktopPage);
+
         // 添加返回按钮
-        const backButton = document.createElement('button');
+        const backButton = document.createElement('button');;
         backButton.className = 'back-btn';
         backButton.innerHTML = `
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -564,8 +590,11 @@ async function loadMobilePage() {
         const response = await fetch(`${basePath}mobile.html`);
         if (!response.ok) throw new Error('加载失败');
         
-        const html = await response.text();
+const html = await response.text();
         mobilePage.innerHTML = html;
+
+        // 【关键修改】手动执行加载进来的 HTML 里的脚本
+        executeScripts(mobilePage);
         
         // 添加返回按钮
         const backButton = document.createElement('button');
@@ -818,6 +847,7 @@ window.addEventListener('error', function(e) {
     </script>
 </body>
 </html>
+
 
 
 
