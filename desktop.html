@@ -234,8 +234,9 @@
             themes: { cool: { bg: "bg-[#eef2ff]", attrBg: "bg-[#eff6ff]", attrText: "text-blue-400", skillBg: "bg-blue-50", skillText: "text-blue-600", subTitle: "text-blue-500", glow: "bg-blue-600/20", headerText: "text-blue-200", toggle: "theme-blue" }, powerful: { bg: "bg-[#fef2f2]", attrBg: "bg-[#fef2f2]", attrText: "text-red-400", skillBg: "bg-red-50", skillText: "text-red-600", subTitle: "text-red-500", glow: "bg-red-600/20", headerText: "text-red-200", toggle: "theme-red" }, happy: { bg: "bg-[#fffbeb]", attrBg: "bg-[#fffbeb]", attrText: "text-orange-400", skillBg: "bg-orange-50", skillText: "text-orange-600", subTitle: "text-orange-500", glow: "bg-orange-600/20", headerText: "text-orange-200", toggle: "theme-orange" }, pure: { bg: "bg-[#f0fdf4]", attrBg: "bg-[#f0fdf4]", attrText: "text-green-400", skillBg: "bg-green-50", skillText: "text-green-600", subTitle: "text-green-500", glow: "bg-green-600/20", headerText: "text-green-200", toggle: "theme-green" } }
         };
         function initGallery() {
-            const grid = document.getElementById('card-grid');
-            grid.innerHTML = cards.map((card, index) => {
+        const grid = document.getElementById('card-grid');
+        if (!grid) return;
+        grid.innerHTML = cards.map((card, index) => {
                 const theme = assets.themes[card.attr];
                 return `<div onclick="openDetail(${index})" class="group cursor-pointer relative aspect-[3/4] rounded-2xl overflow-hidden card-hover-effect bg-slate-800 border border-slate-700">
                             <img src="${card.preview}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500">
@@ -512,28 +513,23 @@ if (typeof window.isDetailAudioPlaying !== 'undefined' && window.isDetailAudioPl
 // =========================================
 // 同时暴露给全局，让主页可以调用
 // =========================================
-window.initDesktopScripts = function() {
-    console.log('初始化电脑版脚本...');
-    
-    // 1. 初始化画廊
-    if (typeof initGallery === 'function') {
-        initGallery();
-    }
-    
-    // 2. 初始化音乐播放器 (新增)
-    if (typeof window.initMusicPlayer === 'function') {
-        window.initMusicPlayer();
-    }
-    
-    // 3. 初始化音乐状态变量
-    if (typeof window.isDetailAudioPlaying === 'undefined') {
-        window.isDetailAudioPlaying = false;
-    }
-    
-    console.log('电脑版初始化完成');
-};
+    window.initDesktopScripts = function() {
+        console.log('初始化电脑版脚本...');
+        initGallery(); // 调用上面的函数
+        
+        if (typeof window.initMusicPlayer === 'function') {
+            window.initMusicPlayer();
+        }
+        
+        if (typeof window.isDetailAudioPlaying === 'undefined') {
+            window.isDetailAudioPlaying = false;
+        }
+        
+        console.log('电脑版初始化完成');
+    };
 
     </script>
 </body>
 </html>
+
 
